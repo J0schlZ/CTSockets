@@ -7,6 +7,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 import org.bukkit.Bukkit;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import de.crafttogether.CTSockets;
 
@@ -15,7 +17,9 @@ public class CTSocketClient implements Runnable {
 	private String host;
 	private int port;
 	private int connectionAttempts;
+	private boolean shutdown;
 	private boolean isConnected;
+	private boolean isRegistered;
 	private boolean whitelisted;
 	
 	private Socket socket;
@@ -26,14 +30,17 @@ public class CTSocketClient implements Runnable {
 		this.clientName = String.valueOf(clientName);
 		this.host = host;
 		this.port = port;
-		
 	    this.isConnected = false;
+	    this.isRegistered = false;
 	    this.whitelisted = true;
 		this.connectionAttempts = 0;
 	}
 	
 	@Override
 	public void run() {
+		shutdown = false;
+		isRegistered = false;
+		
 	    try {
 	    	socket = new Socket(host, port);
 			writer = new PrintWriter(socket.getOutputStream(), true);
@@ -54,34 +61,67 @@ public class CTSocketClient implements Runnable {
 	    	retryConnect();
 	    	return;
 	    }
-	    	    
-	    sendMessage("CLIENT_NAME=" + clientName, "bukkit");
+	    
+		isConnected = true;
+	    register(clientName);
 	    	
 		try {
 			String inputLine;
 			while ((inputLine = reader.readLine()) != null) {
 				if (inputLine.strip().length() < 1)
-					return;
+					continue;
 				
-				if (inputLine.equalsIgnoreCase("WELCOME")) {
-					System.out.println("[CTSockets][INFO]: Connection successful!");
-					this.connectionAttempts = 0;
-					isConnected = true;
-					continue;
-				}
-				if (inputLine.equalsIgnoreCase("NOT_WHITELISTED")) {
-					System.out.println("[CTSockets][ERROR]: IP-Adress not whitelisted");
-					whitelisted = false;
-					continue;
+				JSONObject packet = null;
+				try {
+				     packet = new JSONObject(inputLine);
+				}catch (JSONException e){
+				     e.printStackTrace();
 				}
 				
-				System.out.println("[CTSockets][INFO]: (Received from '" + clientName + "') -> " + inputLine);
+				if (packet != null && packet.has("error")) {
+					String err = packet.getString("error");
+					
+					if (err.equalsIgnoreCase("NOT_WHITELISTED")) {
+						System.out.println("[CTSockets][ERROR]: IP-Adress not whitelisted");
+						whitelisted = false;
+					}
+					continue;
+				}
+				
+				if (packet != null && packet.has("success")) {
+					String msg = packet.getString("success");
+					
+					if(msg.equalsIgnoreCase("WELCOME")) {
+						System.out.println("[CTSockets][INFO]: Connection successful!");
+						isRegistered = true;
+						connectionAttempts = 0;
+						
+						// TODO: Test
+						Bukkit.getScheduler().runTaskLaterAsynchronously(CTSockets.getInstance(), new Runnable() {
+							public void run() {
+								CTSockets.getInstance().sendMessage("hallooooo TEST", "lobby");
+							}
+						}, 3*20L);
+					}
+					continue;
+				}
+				
+				if (packet == null || !packet.has("message") || !packet.has("sender") || !packet.has("target")) {
+					System.out.println("[CTSockets][WARNING]: INVALID PACKET (Received from '" + clientName + "')");
+					System.out.println(inputLine);
+				}
+				
+				System.out.println("[CTSockets][INFO]: Received from '" + clientName + "' -> PACKET[");
+				System.out.println("Sender: " + packet.getString("sender"));
+				System.out.println("Target: " + packet.getString("target"));
+				System.out.println("Message: " + packet.getString("message") + "]");
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (!e.getMessage().equalsIgnoreCase("socket closed") && !e.getMessage().equalsIgnoreCase("connection reset"))
+				e.printStackTrace();
 		}
 		
-		if (isConnected)
+		if (isConnected & !shutdown)
 			System.out.println("[CTSockets][INFO]: lost connection to proxy");
 
 		isConnected = false;
@@ -94,11 +134,11 @@ public class CTSocketClient implements Runnable {
 	}
 	
 	private void retryConnect() {
+		if (shutdown || isConnected || !whitelisted)
+			return;
+		
 		final CTSocketClient client = this;
 		int delay = 3;
-		
-		if (isConnected || !whitelisted)
-			return;
 		
 		connectionAttempts++;
 		
@@ -118,21 +158,60 @@ public class CTSocketClient implements Runnable {
 	}
 
 	public void close() {
+		this.shutdown = true;
+		
 		writer.flush();
 	    writer.close();
 	    
 		try {
 			reader.close();
+			socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+
+	private void sendPacket(JSONObject packet) {
+		String strPacket = packet.toString();
+		
+		// TODO: Exception?
+		if (strPacket == null)
+			return;
+		
+		writer.println(strPacket + "\r\n");
+	}
 	
-	public void sendMessage(String message, String sender) {
-	    writer.println(String.valueOf(message) + "\r\n");
+	private void register(String clientName) {
+		JSONObject packet = new JSONObject();
+		packet.put("register", clientName);
+		sendPacket(packet);
+	}
+	
+	private void sendMessage(String sender, String target, String message) {
+		JSONObject packet = new JSONObject();
+		packet.put("sender", sender);
+		packet.put("target", target);
+		packet.put("message", message);
+		sendPacket(packet);
+	}
+	
+	public void sendMessage(String message) {
+		sendMessage(clientName, "#proxy", message);
+	}
+	
+	public void sendMessage(String message, String target) {
+		sendMessage(clientName, target, message);
+	}
+	
+	public void broadcast(String message) {
+		sendMessage("#all", clientName, message);
 	}
 	
 	public boolean isConnected() {
 		return isConnected;
+	}
+	
+	public boolean isRegistered() {
+		return isRegistered;
 	}
 }

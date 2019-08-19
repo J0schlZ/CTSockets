@@ -7,9 +7,9 @@ import de.crafttogether.ctsockets.CTSocketClient;
 
 public class CTSockets extends JavaPlugin {
 	private static CTSockets plugin;
+	private static CTSocketClient socketClient;
 	
 	public static FileConfiguration config;
-	public static CTSocketClient socketClient;
 	
 	@Override
 	public void onEnable() {		
@@ -26,6 +26,18 @@ public class CTSockets extends JavaPlugin {
 	public void onDisable() {
 		socketClient.close();
 		System.out.println("CTSockets v" + this.getDescription().getVersion() + " disabled");
+	}
+
+	public void sendMessage(String message) {
+		socketClient.sendMessage(message);
+	}
+	
+	public void sendMessage(String message, String target) {
+		socketClient.sendMessage(message, target);
+	}
+	
+	public void broadcastMessage(String message) {
+		socketClient.sendMessage(message);
 	}
 	
 	public FileConfiguration loadConfig() {
