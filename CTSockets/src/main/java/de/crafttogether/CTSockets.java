@@ -1,8 +1,5 @@
 package de.crafttogether;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,17 +19,12 @@ public class CTSockets extends JavaPlugin {
 		System.out.println("CTSockets v" + this.getDescription().getVersion() + " enabled");
 		loadConfig();
 		
-		String name = config.getString("name");
+		String name = String.valueOf(config.getString("Settings.name"));
 		if (name.equals("#"))
 			name = Bukkit.getServer().getName();
 		
-		try {
-			socketClient = new CTSocketClient(config.getString("Settings.host"), config.getInt("Settings.port"), name);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		socketClient = new CTSocketClient(config.getString("Settings.host"), config.getInt("Settings.port"), name);
+		socketClient.connect();
 	}
 	
 	@Override

@@ -10,7 +10,8 @@ import java.net.UnknownHostException;
 
 import de.crafttogether.CTSockets;
 
-public class CTSocketClient implements Runnable {	
+public class CTSocketClient implements Runnable {
+	private String clientName;
 	private String host;
 	private int port;
 	private boolean read;
@@ -20,30 +21,34 @@ public class CTSocketClient implements Runnable {
 	private PrintWriter writer;
 	private BufferedReader reader;
 
-	public CTSocketClient(String host, int port, String clientName) throws UnknownHostException, IOException {
+	public CTSocketClient(String host, int port, String clientName) {
+		this.clientName = clientName;
 		this.host = host;
 		this.port = port;
 	    this.read = true;
 	    this.isConnected = false;
-	    
-	    CTSockets.getInstance().getServer().getScheduler().runTaskAsynchronously(CTSockets.getInstance(), this);
 	}
 	
 	@Override
-	public void run() {	    
+	public void run() {
 	    try {
 	    	this.socket = new Socket(host, port);
 			this.writer = new PrintWriter(this.socket.getOutputStream(), true);
 			this.reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 		} catch (UnknownHostException e) {
+			System.out.println("[CTSocketsBungee]: Connection failed!");
 			e.printStackTrace();
 		} catch (IOException e) {
+			System.out.println("[CTSocketsBungee]: Connection failed!");
 			e.printStackTrace();
 		}
 
-		sendMessage("Hello Server", "bukkit");
+	    System.out.println("[CTSocketsBungee]: Connection established");
+	    
 	    this.isConnected = true;
 	    this.read = true;
+	    
+	    sendMessage("Hello Server, i'm " + this.clientName, "bukkit");
 	    
 		while (this.read) {
 			try {
@@ -73,6 +78,11 @@ public class CTSocketClient implements Runnable {
 		} 
 	}
 	
+	public void connect() {
+		System.out.println("[CTSocketsBungee]: Connecting to " + this.host + "...");
+		CTSockets.getInstance().getServer().getScheduler().runTaskAsynchronously(CTSockets.getInstance(), this);
+	}
+	
 	public void reconnect() {
 		// TODO Auto-generated method stub
 		
@@ -97,5 +107,4 @@ public class CTSocketClient implements Runnable {
 	public boolean isConnected() {
 		return this.isConnected;
 	}
-
 }
