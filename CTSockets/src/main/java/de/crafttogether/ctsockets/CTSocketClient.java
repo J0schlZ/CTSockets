@@ -4,10 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.ConnectException;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+
+import org.bukkit.Bukkit;
 
 import de.crafttogether.CTSockets;
 
@@ -15,8 +14,9 @@ public class CTSocketClient implements Runnable {
 	private String clientName;
 	private String host;
 	private int port;
-	private boolean read;
+	private int connectionAttempts;
 	private boolean isConnected;
+	private boolean whitelisted;
 	
 	private Socket socket;
 	private PrintWriter writer;
@@ -26,8 +26,10 @@ public class CTSocketClient implements Runnable {
 		this.clientName = String.valueOf(clientName);
 		this.host = host;
 		this.port = port;
-	    this.read = true;
+		
 	    this.isConnected = false;
+	    this.whitelisted = true;
+		this.connectionAttempts = 0;
 	}
 	
 	@Override
@@ -42,55 +44,77 @@ public class CTSocketClient implements Runnable {
 			if (e.getMessage().contains("Connection refused"))
 				message = "Connection refused";
 			
-			System.out.println("[CTSockets]: Could not connect to " + host + ":" + port + " (" + message + ")");
+			System.out.println("[CTSockets][ERROR]: Could not connect to " + host + ":" + port + " (" + message + ")");
 			
 			if (message == e.getMessage())
 				e.printStackTrace();
 		}
 	    
-	    if (socket == null || !socket.isConnected()) {
-	    	reconnect();
+	    if (socket == null || !socket.isConnected() && !socket.isClosed()) {
+	    	retryConnect();
 	    	return;
 	    }
-
-	    System.out.println("[CTSockets]: Connection established");
-	    
-	    isConnected = true;
-	    read = true;
-	    
-	    sendMessage("Hello Server, i'm " + clientName, "bukkit");
-	    
-		while (read) {
-			try {
-				String inputLine;
-			
-				while ((inputLine = reader.readLine()) != null) {
-					System.out.println("[CTSockets]: (Received from proxy) -> " + inputLine);
-				}			
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.out.println("[CTSockets]: lost connection to proxy");
-				isConnected = false;
-				read = false;
-				reconnect();
-			
-			} catch (ArrayIndexOutOfBoundsException e) {
-				e.printStackTrace();
+	    	    
+	    sendMessage("CLIENT_NAME=" + clientName, "bukkit");
+	    	
+		try {
+			String inputLine;
+			while ((inputLine = reader.readLine()) != null) {
+				if (inputLine.equalsIgnoreCase("WELCOME")) {
+					System.out.println("[CTSockets][INFO]: Connection successful!");
+					this.connectionAttempts = 0;
+					isConnected = true;
+					continue;
+				}
+				if (inputLine.equalsIgnoreCase("NOT_WHITELISTED")) {
+					System.out.println("[CTSockets][ERROR]: IP-Adress not whitelisted");
+					whitelisted = false;
+					continue;
+				}
+				
+				System.out.println("[CTSockets][INFO]: (Received from '" + clientName + "') -> " + inputLine);
 			}
-		} 
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		if (isConnected)
+			System.out.println("[CTSockets][INFO]: lost connection to proxy");
+
+		isConnected = false;
+		retryConnect();
 	}
 	
 	public void connect() {
-		System.out.println("[CTSockets]: Connecting to " + host + "...");
+		System.out.println("[CTSockets][INFO]: Connecting to " + host + ":" + port + "...");
 		CTSockets.getInstance().getServer().getScheduler().runTaskAsynchronously(CTSockets.getInstance(), this);
 	}
 	
-	public void reconnect() {
+	private void retryConnect() {
+		final CTSocketClient client = this;
+		int delay = 3;
 		
+		if (isConnected || !whitelisted)
+			return;
+		
+		connectionAttempts++;
+		
+		if (connectionAttempts > 10) delay = 5;
+		if (connectionAttempts > 15) delay = 10;
+		if (connectionAttempts > 21) delay = 15;
+		
+		Bukkit.getScheduler().runTaskLaterAsynchronously(CTSockets.getInstance(), new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("[CTSockets][INFO]: Try to reconnect");
+				client.connect();
+			}
+		}, delay * 20L);
+		
+		System.out.println("[CTSockets][INFO]: Try to reconnect to " + host + ":" + port + " in " + delay + " Seconds");
 	}
 
 	public void close() {
-		read = false;
 		writer.flush();
 	    writer.close();
 	    
