@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -22,7 +23,7 @@ public class CTSocketClient implements Runnable {
 	private BufferedReader reader;
 
 	public CTSocketClient(String host, int port, String clientName) {
-		this.clientName = clientName;
+		this.clientName = String.valueOf(clientName);
 		this.host = host;
 		this.port = port;
 	    this.read = true;
@@ -32,45 +33,46 @@ public class CTSocketClient implements Runnable {
 	@Override
 	public void run() {
 	    try {
-	    	this.socket = new Socket(host, port);
-			this.writer = new PrintWriter(this.socket.getOutputStream(), true);
-			this.reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-		} catch (UnknownHostException e) {
-			System.out.println("[CTSocketsBungee]: Connection failed!");
-			e.printStackTrace();
+	    	socket = new Socket(host, port);
+			writer = new PrintWriter(socket.getOutputStream(), true);
+			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		} catch (IOException e) {
-			System.out.println("[CTSocketsBungee]: Connection failed!");
-			e.printStackTrace();
+			String message = e.getMessage();
+			
+			if (e.getMessage().contains("Connection refused"))
+				message = "Connection refused";
+			
+			System.out.println("[CTSockets]: Could not connect to " + host + ":" + port + " (" + message + ")");
+			
+			if (message == e.getMessage())
+				e.printStackTrace();
 		}
+	    
+	    if (socket == null || !socket.isConnected()) {
+	    	reconnect();
+	    	return;
+	    }
 
-	    System.out.println("[CTSocketsBungee]: Connection established");
+	    System.out.println("[CTSockets]: Connection established");
 	    
-	    this.isConnected = true;
-	    this.read = true;
+	    isConnected = true;
+	    read = true;
 	    
-	    sendMessage("Hello Server, i'm " + this.clientName, "bukkit");
+	    sendMessage("Hello Server, i'm " + clientName, "bukkit");
 	    
-		while (this.read) {
+		while (read) {
 			try {
 				String inputLine;
 			
-				while ((inputLine = this.reader.readLine()) != null) {
-					System.out.println("[CTSocketsBungee]: (Received from proxy) -> " + inputLine);
-				}
-		
-			} catch (SocketException e) {
-				e.printStackTrace();
-				System.out.println("[CTSocketsBungee]: lost connection to proxy");
-				this.isConnected = false;
-				this.read = false;
-				this.reconnect();
-			
+				while ((inputLine = reader.readLine()) != null) {
+					System.out.println("[CTSockets]: (Received from proxy) -> " + inputLine);
+				}			
 			} catch (IOException e) {
 				e.printStackTrace();
-				System.out.println("[CTSocketsBungee]: lost connection to proxy");
-				this.isConnected = false;
-				this.read = false;
-				this.reconnect();
+				System.out.println("[CTSockets]: lost connection to proxy");
+				isConnected = false;
+				read = false;
+				reconnect();
 			
 			} catch (ArrayIndexOutOfBoundsException e) {
 				e.printStackTrace();
@@ -79,32 +81,31 @@ public class CTSocketClient implements Runnable {
 	}
 	
 	public void connect() {
-		System.out.println("[CTSocketsBungee]: Connecting to " + this.host + "...");
+		System.out.println("[CTSockets]: Connecting to " + host + "...");
 		CTSockets.getInstance().getServer().getScheduler().runTaskAsynchronously(CTSockets.getInstance(), this);
 	}
 	
 	public void reconnect() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void close() {
-		this.read = false;
-		this.writer.flush();
-	    this.writer.close();
+		read = false;
+		writer.flush();
+	    writer.close();
 	    
 		try {
-			this.reader.close();
+			reader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public void sendMessage(String message, String sender) {
-	    this.writer.println(String.valueOf(message) + "\r\n");
+	    writer.println(String.valueOf(message) + "\r\n");
 	}
 	
 	public boolean isConnected() {
-		return this.isConnected;
+		return isConnected;
 	}
 }

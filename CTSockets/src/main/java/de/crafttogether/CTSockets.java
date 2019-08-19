@@ -1,6 +1,5 @@
 package de.crafttogether;
 
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,11 +18,7 @@ public class CTSockets extends JavaPlugin {
 		System.out.println("CTSockets v" + this.getDescription().getVersion() + " enabled");
 		loadConfig();
 		
-		String name = String.valueOf(config.getString("Settings.name"));
-		if (name.equals("#"))
-			name = Bukkit.getServer().getName();
-		
-		socketClient = new CTSocketClient(config.getString("Settings.host"), config.getInt("Settings.port"), name);
+		socketClient = new CTSocketClient(config.getString("Settings.host"), config.getInt("Settings.port"), config.getString("Settings.name"));
 		socketClient.connect();
 	}
 	
