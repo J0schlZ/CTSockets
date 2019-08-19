@@ -2,4 +2,5 @@ Settings:
   debug: true
   ip: '127.0.0.1'
   port: 8321
+# Set name to '#' to use 'server-name' from server.properties
   name: '#' 
