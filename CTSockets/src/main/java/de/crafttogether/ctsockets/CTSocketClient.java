@@ -60,6 +60,9 @@ public class CTSocketClient implements Runnable {
 		try {
 			String inputLine;
 			while ((inputLine = reader.readLine()) != null) {
+				if (inputLine.strip().length() < 1)
+					return;
+				
 				if (inputLine.equalsIgnoreCase("WELCOME")) {
 					System.out.println("[CTSockets][INFO]: Connection successful!");
 					this.connectionAttempts = 0;
