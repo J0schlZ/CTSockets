@@ -1,0 +1,5 @@
+Settings:
+  port: 8321
+  debug: true
+Whitelist:
+  - '127.0.0.1'

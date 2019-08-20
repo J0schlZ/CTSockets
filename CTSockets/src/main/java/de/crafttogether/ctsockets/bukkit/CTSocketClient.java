@@ -1,4 +1,4 @@
-package de.crafttogether.ctsockets;
+package de.crafttogether.ctsockets.bukkit;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,9 +12,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.crafttogether.CTSockets;
-import de.crafttogether.ctsockets.events.ServerConnectedEvent;
-import de.crafttogether.ctsockets.events.ServerDisconnectedEvent;
+import de.crafttogether.ctsockets.bukkit.events.ServerConnectedEvent;
+import de.crafttogether.ctsockets.bukkit.events.ServerDisconnectedEvent;
+
+/**
+ * @hidden
+ */
 
 public class CTSocketClient implements Runnable {
 	private String clientName;

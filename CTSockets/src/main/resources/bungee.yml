@@ -1,0 +1,5 @@
+name: CTSocketsBungee
+description: No more Plugin Messaging Channels!
+main: de.crafttogether.ctsockets.bungee.CTSockets
+version: 1.0.0
+author: J0schlZ

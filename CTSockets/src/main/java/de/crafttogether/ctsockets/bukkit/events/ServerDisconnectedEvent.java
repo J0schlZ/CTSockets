@@ -1,7 +1,11 @@
-package de.crafttogether.ctsockets.events;
+package de.crafttogether.ctsockets.bukkit.events;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+
+/**
+ * Fires when a server disconnects
+ */
 
 public final class ServerDisconnectedEvent extends Event
 {
@@ -12,14 +16,24 @@ public final class ServerDisconnectedEvent extends Event
         this.serverName = serverName;
     }
     
+    /**
+     * Get the servers name
+     * @return serverName (String)
+     */
     public String getName() {
         return serverName;
     }
     
+    /**
+     * @hidden
+     */
     public HandlerList getHandlers() {
         return handlers;
     }
     
+    /**
+     * @hidden
+     */
     public static HandlerList getHandlerList() {
         return handlers;
     }
