@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,6 +26,8 @@ public class CTSocketClient implements Runnable {
 	private boolean isRegistered;
 	private boolean whitelisted;
 	
+	public ArrayList<String> server;
+	
 	private Socket socket;
 	private PrintWriter writer;
 	private BufferedReader reader;
@@ -32,16 +36,15 @@ public class CTSocketClient implements Runnable {
 		this.clientName = String.valueOf(clientName);
 		this.host = host;
 		this.port = port;
-	    this.isConnected = false;
-	    this.isRegistered = false;
 	    this.whitelisted = true;
-		this.connectionAttempts = 0;
 	}
 	
 	@Override
 	public void run() {
 		shutdown = false;
+		isConnected = false;
 		isRegistered = false;
+		server = new ArrayList<String>();
 		
 	    try {
 	    	socket = new Socket(host, port);
@@ -90,26 +93,32 @@ public class CTSocketClient implements Runnable {
 					continue;
 				}
 				
-				if (packet != null && packet.has("success")) {
-					String msg = packet.getString("success");
+				if (packet != null && packet.has("serverlist")) {
+					JSONArray serverlist = packet.getJSONArray("serverlist");
 					
-					if(msg.equalsIgnoreCase("WELCOME")) {
-						System.out.println("[CTSockets][INFO]: Connection successful!");
-						isRegistered = true;
-						connectionAttempts = 0;
-						
-						// TODO: Test
-						Bukkit.getScheduler().runTaskLaterAsynchronously(CTSockets.getInstance(), new Runnable() {
-							public void run() {
-								CTSockets.getInstance().broadcastMessage("hallooooo TEST");
-							}
-						}, 3*20L);
+					if (serverlist == null) {
+						System.out.println("[CTSockets][ERROR]: Unable to read serverlist");
+						continue;
 					}
+					
+					for (Object srvName : serverlist) {
+						if (!server.contains(srvName))
+							server.add(String.valueOf(srvName));
+					}
+					
+					System.out.println("[CTSockets][INFO]: Connection successful!");
+					isRegistered = true;
+					connectionAttempts = 0;					
 					continue;
 				}
 				
 				if (packet != null && packet.has("server_connected")) {
-					final String srvName = packet.getString("server_connected");					
+					final String srvName = packet.getString("server_connected");
+
+					if (!server.contains(srvName))
+						server.add(String.valueOf(srvName));
+					
+					System.out.println("[CTSockets][INFO]: #ServerConnectedEvent (" + srvName + ")");
 					Bukkit.getScheduler().runTask(CTSockets.getInstance(), new Runnable() {
 						@Override
 						public void run() {
@@ -122,6 +131,10 @@ public class CTSocketClient implements Runnable {
 				
 				if (packet != null && packet.has("server_disconnected")) {
 					final String srvName = packet.getString("server_disconnected");
+					
+					if (server.contains(srvName))
+						server.remove(String.valueOf(srvName));
+					
 					System.out.println("[CTSockets][INFO]: #ServerDisconnectedEvent (" + srvName + ")");
 					Bukkit.getScheduler().runTask(CTSockets.getInstance(), new Runnable() {
 						@Override
@@ -133,8 +146,10 @@ public class CTSocketClient implements Runnable {
 					continue;
 				}
 				
-				if (packet == null || !packet.has("message") || !packet.has("sender"))
-					System.out.print("[CTSockets][WARNING]: INVALID PACKET (Received from 'proxy'");
+				if (packet == null || !packet.has("message") || !packet.has("sender")) {
+					System.out.println("[CTSockets][WARNING]: INVALID PACKET (Received from 'proxy'");
+					System.out.println(inputLine);
+				}
 				
 				System.out.println("[CTSockets][INFO]: Received from '" + clientName + "' -> PACKET[");
 				System.out.println("Sender: " + packet.getString("sender"));

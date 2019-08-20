@@ -1,5 +1,7 @@
 package de.crafttogether;
 
+import java.util.ArrayList;
+
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,6 +30,14 @@ public class CTSockets extends JavaPlugin {
 		System.out.println("CTSockets v" + this.getDescription().getVersion() + " disabled");
 	}
 
+    public ArrayList<String> getConnectedServers() {
+    	return socketClient.server;
+    }
+    
+    public boolean isConnected(String srvName) {
+    	return socketClient.server.contains(srvName);
+    }
+    
 	public void sendMessage(String message) {
 		socketClient.sendMessage(message);
 	}
