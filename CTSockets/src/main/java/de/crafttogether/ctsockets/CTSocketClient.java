@@ -106,10 +106,8 @@ public class CTSocketClient implements Runnable {
 					continue;
 				}
 				
-				if (packet == null || !packet.has("message") || !packet.has("sender") || !packet.has("target")) {
-					System.out.println("[CTSockets][WARNING]: INVALID PACKET (Received from '" + clientName + "')");
-					System.out.println(inputLine);
-				}
+				if (packet == null || !packet.has("message") || !packet.has("sender") || !packet.has("target"))
+					System.out.print("[CTSockets][WARNING]: INVALID PACKET (Received from '" + clientName + "')\r\n" + inputLine);
 				
 				System.out.println("[CTSockets][INFO]: Received from '" + clientName + "' -> PACKET[");
 				System.out.println("Sender: " + packet.getString("sender"));
