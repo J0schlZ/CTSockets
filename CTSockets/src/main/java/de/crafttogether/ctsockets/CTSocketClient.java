@@ -11,6 +11,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.crafttogether.CTSockets;
+import de.crafttogether.ctsockets.events.ServerConnectedEvent;
+import de.crafttogether.ctsockets.events.ServerDisconnectedEvent;
 
 public class CTSocketClient implements Runnable {
 	private String clientName;
@@ -99,19 +101,43 @@ public class CTSocketClient implements Runnable {
 						// TODO: Test
 						Bukkit.getScheduler().runTaskLaterAsynchronously(CTSockets.getInstance(), new Runnable() {
 							public void run() {
-								CTSockets.getInstance().sendMessage("hallooooo TEST", "lobby");
+								CTSockets.getInstance().broadcastMessage("hallooooo TEST");
 							}
 						}, 3*20L);
 					}
 					continue;
 				}
 				
-				if (packet == null || !packet.has("message") || !packet.has("sender") || !packet.has("target"))
-					System.out.print("[CTSockets][WARNING]: INVALID PACKET (Received from '" + clientName + "')\r\n" + inputLine);
+				if (packet != null && packet.has("server_connected")) {
+					final String srvName = packet.getString("server_connected");					
+					Bukkit.getScheduler().runTask(CTSockets.getInstance(), new Runnable() {
+						@Override
+						public void run() {
+							ServerConnectedEvent event = new ServerConnectedEvent(srvName);
+							Bukkit.getPluginManager().callEvent(event);
+						}
+					});
+					continue;
+				}
+				
+				if (packet != null && packet.has("server_disconnected")) {
+					final String srvName = packet.getString("server_disconnected");
+					System.out.println("[CTSockets][INFO]: #ServerDisconnectedEvent (" + srvName + ")");
+					Bukkit.getScheduler().runTask(CTSockets.getInstance(), new Runnable() {
+						@Override
+						public void run() {
+							ServerDisconnectedEvent event = new ServerDisconnectedEvent(srvName);
+							Bukkit.getPluginManager().callEvent(event);
+						}
+					});
+					continue;
+				}
+				
+				if (packet == null || !packet.has("message") || !packet.has("sender"))
+					System.out.print("[CTSockets][WARNING]: INVALID PACKET (Received from 'proxy'");
 				
 				System.out.println("[CTSockets][INFO]: Received from '" + clientName + "' -> PACKET[");
 				System.out.println("Sender: " + packet.getString("sender"));
-				System.out.println("Target: " + packet.getString("target"));
 				System.out.println("Message: " + packet.getString("message") + "]");
 			}
 		} catch (Exception e) {

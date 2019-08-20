@@ -13,15 +13,15 @@ public final class ServerConnectedEvent extends Event
     }
     
     public String getName() {
-        return this.serverName;
+        return serverName;
     }
     
     public HandlerList getHandlers() {
-        return ServerConnectedEvent.handlers;
+        return handlers;
     }
     
     public static HandlerList getHandlerList() {
-        return ServerConnectedEvent.handlers;
+        return handlers;
     }
     
     static {
