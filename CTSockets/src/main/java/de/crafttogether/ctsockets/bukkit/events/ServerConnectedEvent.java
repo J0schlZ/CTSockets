@@ -12,8 +12,9 @@ public final class ServerConnectedEvent extends Event
     private static final HandlerList handlers;
     private String serverName;
     
-    public ServerConnectedEvent(final String serverName) {
-        this.serverName = serverName;
+    public ServerConnectedEvent(final String serverName, Boolean isAsynchronous) {
+        super(isAsynchronous);
+    	this.serverName = serverName;
     }
     
     /**

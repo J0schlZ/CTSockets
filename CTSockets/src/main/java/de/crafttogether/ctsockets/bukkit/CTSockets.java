@@ -17,9 +17,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.io.ByteStreams;
 
 /**
- * No more Plugin Messaging Channels!
+ * Bukkit-Plugin
  * @author J0schlZ
- * @version 1.0.0-BETA
+ * @version 1.1.0-BETA
  */
 
 public class CTSockets extends JavaPlugin {
@@ -52,7 +52,7 @@ public class CTSockets extends JavaPlugin {
 		System.out.println("CTSockets v" + this.getDescription().getVersion() + " disabled");
 	}
 	
-	public FileConfiguration loadConfig() {
+	private FileConfiguration loadConfig() {
         if (!getDataFolder().exists()) {
         	this.getDataFolder().mkdir();
         }
@@ -100,25 +100,33 @@ public class CTSockets extends JavaPlugin {
 	 * Sends given message to the proxy (Bungeecord)
 	 * @param message (String) 
 	 */
-	public void sendMessage(String message) {
-		socketClient.sendMessage(message);
+	public void sendToProxy(String message) {
+		socketClient.sendMessage(message, "#proxy");
 	}
 	
 	/**
-	 * Sends given message to a specific server
-	 * @param message (String) 
+	 * Sends given message to a given target
 	 * @param target (String) 
+	 * @param message (String) 
 	 */
-	public void sendMessage(String message, String target) {
+	public void sendToServer(String target, String message) {
 		socketClient.sendMessage(message, target);
+	}
+	
+	/**
+	 * Broadcasts given message to all connected servers exceptional proxy
+	 * @param message (String) 
+	 */
+	public void sendToAllServers(String message) {
+		socketClient.sendMessage(message, "#server");
 	}
 	
 	/**
 	 * Broadcasts given message to all connected servers including proxy
 	 * @param message (String) 
 	 */
-	public void broadcastMessage(String message) {
-		socketClient.sendMessage(message);
+	public void sendToAll(String message) {
+		socketClient.sendMessage(message, "#all");
 	}
 	
 	/**

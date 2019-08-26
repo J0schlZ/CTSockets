@@ -122,13 +122,8 @@ public class CTSocketClient implements Runnable {
 						server.add(String.valueOf(srvName));
 					
 					System.out.println("[CTSockets][INFO]: #ServerConnectedEvent (" + srvName + ")");
-					Bukkit.getScheduler().runTask(CTSockets.getInstance(), new Runnable() {
-						@Override
-						public void run() {
-							ServerConnectedEvent event = new ServerConnectedEvent(srvName);
-							Bukkit.getPluginManager().callEvent(event);
-						}
-					});
+					ServerConnectedEvent event = new ServerConnectedEvent(srvName, true);
+					Bukkit.getPluginManager().callEvent(event);
 					continue;
 				}
 				
@@ -139,13 +134,8 @@ public class CTSocketClient implements Runnable {
 						server.remove(String.valueOf(srvName));
 					
 					System.out.println("[CTSockets][INFO]: #ServerDisconnectedEvent (" + srvName + ")");
-					Bukkit.getScheduler().runTask(CTSockets.getInstance(), new Runnable() {
-						@Override
-						public void run() {
-							ServerDisconnectedEvent event = new ServerDisconnectedEvent(srvName);
-							Bukkit.getPluginManager().callEvent(event);
-						}
-					});
+					ServerDisconnectedEvent event = new ServerDisconnectedEvent(srvName, true);
+					Bukkit.getPluginManager().callEvent(event);
 					continue;
 				}
 				
@@ -229,24 +219,12 @@ public class CTSocketClient implements Runnable {
 		sendPacket(packet);
 	}
 	
-	private void sendMessage(String sender, String target, String message) {
+	public void sendMessage(String message, String target) {
 		JSONObject packet = new JSONObject();
-		packet.put("sender", sender);
+		packet.put("sender", clientName);
 		packet.put("target", target);
 		packet.put("message", message);
 		sendPacket(packet);
-	}
-	
-	public void sendMessage(String message) {
-		sendMessage(clientName, "#proxy", message);
-	}
-	
-	public void sendMessage(String message, String target) {
-		sendMessage(clientName, target, message);
-	}
-	
-	public void broadcast(String message) {
-		sendMessage("#all", clientName, message);
 	}
 	
 	public boolean isConnected() {

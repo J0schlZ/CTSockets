@@ -17,12 +17,22 @@ import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 
+/**
+ * Bungeecord-Plugin
+ * @author J0schlZ
+ * @version 1.1.0-BETA
+ */
+
+
 public class CTSockets extends Plugin {
 	private static CTSockets plugin;
 	
     public static CTSocketServer socketServer;
     public static Configuration config;
     
+    /**
+     * @hidden
+     */
     @Override
 	public void onEnable() {
     	plugin = this;
@@ -34,29 +44,16 @@ public class CTSockets extends Plugin {
 		getProxy().getScheduler().runAsync(this, socketServer);
 	}
 	
+    /**
+     * @hidden
+     */
     @Override
 	public void onDisable() {
 		socketServer.close();
 		System.out.println("CTSockets v" + this.getDescription().getVersion() + " disabled");
     }
     
-    public ArrayList<String> getConnectedServers() {
-    	return socketServer.server;
-    }
-    
-    public boolean isConnected(String srvName) {
-    	return socketServer.server.contains(srvName);
-    }
-    
-    public void sendMessage(String message, String target) {
-    	socketServer.sendMessage(message, "#proxy", target);
-    }
-    
-    public void broadcastMessage(String message) {
-    	socketServer.broadcast(message, "#proxy");
-    }
-		
-	public Configuration loadConfig() {
+	private Configuration loadConfig() {
         if (!getDataFolder().exists()) {
         	this.getDataFolder().mkdir();
         }
@@ -81,7 +78,52 @@ public class CTSockets extends Plugin {
         
         return config;
 	}
+    
+    /**
+     * Gets a list of all connected servers, exceptional proxy (Bungeecord)
+     * @return ArrayList(String)
+     */
+    public ArrayList<String> getConnectedServers() {
+    	return socketServer.server;
+    }
+    
+    /**
+     * Checks if given server is connected
+     * @param serverName (String) 
+     * @return Boolean
+     */
+    public boolean isConnected(String srvName) {
+    	return socketServer.server.contains(srvName);
+    }
+    
+	/**
+	 * Sends given message to the given target.
+	 * @param target (String)
+	 * @param message (String) 
+	 */
+    public void sendToServer(String target, String message) {
+    	socketServer.sendMessage(message, "#proxy", target);
+    }
+    
+	/**
+	 * Broadcasts given message to all connected servers including proxy
+	 * @param message (String) 
+	 */
+    public void sendToAllServers(String message) {
+    	socketServer.broadcast(message, "#proxy");
+    }
 	
+	/**
+	 * Returns the configuration of the plugin
+	 * @return Configuration
+	 */
+	public Configuration getConfig() {
+		return config;
+	}
+	
+	/**
+	 * @return
+	 */
 	public static CTSockets getInstance() {
 		return plugin;
 	}

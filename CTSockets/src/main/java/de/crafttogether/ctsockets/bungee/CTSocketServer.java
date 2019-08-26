@@ -15,6 +15,10 @@ import de.crafttogether.ctsockets.bungee.events.ServerConnectedEvent;
 import de.crafttogether.ctsockets.bungee.events.ServerDisconnectedEvent;
 import net.md_5.bungee.api.ProxyServer;
 
+/**
+ * @hidden
+ */
+
 public class CTSocketServer implements Runnable {
 	private int port;
 	private Boolean listen;

@@ -16,6 +16,10 @@ import de.crafttogether.ctsockets.bungee.events.MessageForwardedEvent;
 import de.crafttogether.ctsockets.bungee.events.MessageReceivedEvent;
 import net.md_5.bungee.api.ProxyServer;
 
+/**
+ * @hidden
+ */
+
 public class ConnectionHandler implements Runnable {
 	private UUID clientID;
 	private Socket client;
@@ -93,11 +97,13 @@ public class ConnectionHandler implements Runnable {
 					String target = packet.getString("target");
 					String message = packet.getString("message");
 					
-					if (target.equalsIgnoreCase("#all") || target.equalsIgnoreCase("#proxy")) {
-						MessageReceivedEvent receivedEvent = new MessageReceivedEvent(sender, message);
-				    	ProxyServer.getInstance().getPluginManager().callEvent(receivedEvent);
+					if (target.equalsIgnoreCase("#all") || target.equalsIgnoreCase("#proxy") || target.equalsIgnoreCase("#server")) {
+						if (!target.equalsIgnoreCase("#server")) {
+							MessageReceivedEvent receivedEvent = new MessageReceivedEvent(sender, message);
+							ProxyServer.getInstance().getPluginManager().callEvent(receivedEvent);
+						}
 						
-						if (target.equalsIgnoreCase("#all")) {							
+						if (target.equalsIgnoreCase("#all") || target.equalsIgnoreCase("#server")) {							
 							for (String server : CTSocketServer.getInstance().server)
 								CTSocketServer.getInstance().sendMessage(message, sender, server);
 							
@@ -119,6 +125,7 @@ public class ConnectionHandler implements Runnable {
 						}
 
 						// TODO: Send to client?
+						System.out.println("[CTSockets][ERROR]: Server '" + target + "' is not connected.");
 						System.out.println("[CTSockets][ERROR]: Cannot forward message from '" + sender + "' to '" + target + "'");
 						System.out.println(message);
 						

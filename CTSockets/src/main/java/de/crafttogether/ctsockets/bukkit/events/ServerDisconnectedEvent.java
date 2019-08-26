@@ -12,7 +12,8 @@ public final class ServerDisconnectedEvent extends Event
     private static final HandlerList handlers;
     private String serverName;
     
-    public ServerDisconnectedEvent(final String serverName) {
+    public ServerDisconnectedEvent(final String serverName, Boolean isAsynchronous) {
+    	super(isAsynchronous);
         this.serverName = serverName;
     }
     
