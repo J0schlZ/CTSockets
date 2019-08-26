@@ -23,7 +23,6 @@ import net.md_5.bungee.config.YamlConfiguration;
  * @version 1.1.0-BETA
  */
 
-
 public class CTSockets extends Plugin {
 	private static CTSockets plugin;
 	
@@ -38,8 +37,8 @@ public class CTSockets extends Plugin {
     	plugin = this;
     	
     	System.out.println("CTSockets v" + this.getDescription().getVersion() + " enabled");
-    	
 		loadConfig();
+		
 		socketServer = new CTSocketServer(config.getInt("Settings.port"));
 		getProxy().getScheduler().runAsync(this, socketServer);
 	}
