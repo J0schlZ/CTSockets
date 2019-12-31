@@ -25,7 +25,9 @@ import com.google.common.io.ByteStreams;
 public class CTSockets extends JavaPlugin {
 	private static CTSockets plugin;
 	private static CTSocketClient socketClient;
+	
 	private static FileConfiguration config; 
+	private static FileConfiguration messages; 
 	
     /**
      * @hidden
@@ -38,7 +40,7 @@ public class CTSockets extends JavaPlugin {
 		socketClient = new CTSocketClient(config.getString("Settings.host"), config.getInt("Settings.port"), config.getString("Settings.name"));
 		socketClient.connect();
 		
-		new CommandHandler(this, socketClient);
+		new CommandHandler(this);
 		System.out.println(this.getDescription().getName() + " v" + this.getDescription().getVersion() + " enabled");
 	}
 	
@@ -57,8 +59,9 @@ public class CTSockets extends JavaPlugin {
         if (!getDataFolder().exists()) {
         	this.getDataFolder().mkdir();
         }
-        
+
         File configFile = new File(getDataFolder(), "config.yml");
+        File msgFile = new File(getDataFolder(), "messages.yml");
         
         try {
             if (!configFile.exists()) {
@@ -67,12 +70,20 @@ public class CTSockets extends JavaPlugin {
                 OutputStream os = new FileOutputStream(configFile);
                 ByteStreams.copy(is, os);
             }
+            
+            if (!msgFile.exists()) {
+            	msgFile.createNewFile();
+                InputStream is = getResource("bukkitmessages.yml");
+                OutputStream os = new FileOutputStream(msgFile);
+                ByteStreams.copy(is, os);
+            }
         } catch (IOException e) {
-            throw new RuntimeException("Unable to create config.yml", e);
+            throw new RuntimeException("Unable to create messages.yml", e);
         }
 
         try {
 			config = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(configFile)));
+			messages = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(msgFile)));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -136,6 +147,14 @@ public class CTSockets extends JavaPlugin {
 	 */
 	public void sendToAll(String message) {
 		socketClient.sendMessage(message, "#all");
+	}
+	
+	/**
+	 * Returns the message configuration of the plugin
+	 * @return FileConfiguration
+	 */
+	public FileConfiguration getMessages() {
+		return messages;
 	}
 	
 	/**

@@ -20,16 +20,25 @@ import net.md_5.bungee.api.ProxyServer;
  */
 
 public class CTSocketServer implements Runnable {
+	public CTSockets plugin;
+	public static CTSocketServer socketServer;
+	
 	private int port;
-	private Boolean listen;
+	private boolean listen;
+	
+	private boolean debug;
 	
 	public ServerSocket socket;
 	public ConcurrentHashMap<UUID, ConnectionHandler> clients = new ConcurrentHashMap<UUID, ConnectionHandler>();
 	public ArrayList<String> server = new ArrayList<String>();
 
-	public CTSocketServer (int port) {		
+	public CTSocketServer (int port) {
+		this.plugin = CTSockets.getInstance();
 	    this.port = port;
 		this.listen = true;
+		socketServer = this;
+		
+		this.debug = plugin.getConfig().getBoolean("Settings.debug");
 	}
 	
 	@Override
@@ -38,7 +47,7 @@ public class CTSocketServer implements Runnable {
 			socket = new ServerSocket(port);
 			listen = true;
 			
-			System.out.println("[CTSocketsBungee][INFO]: Waiting for connections...");
+			plugin.getLogger().info("Waiting for connections...");
 			
 			while (listen) {
 				Socket client = null;
@@ -79,7 +88,7 @@ public class CTSocketServer implements Runnable {
 	}
 	
 	public static CTSocketServer getInstance() {
-		return CTSockets.socketServer;
+		return socketServer;
 	}
 
 	public void clientDisconnected(UUID clientID) {
@@ -89,12 +98,12 @@ public class CTSocketServer implements Runnable {
 	
 	public void registerServer(ConnectionHandler conn, String srvName) {
 		if (server.contains(srvName)) {
-			System.out.println("[CTSocketsBungee][ERROR]: Server '" + srvName + "' was registered before!");
-			// TODO: Disconnect ?!
+			plugin.getLogger().warning("Error: Server '" + srvName + "' was registered before!");
+			close();
 			return;
 		}
 		
-		System.out.println("[CTSocketsBungee][INFO]: " + conn.clientName + " registered as '" + srvName + "'");
+		plugin.getLogger().info(conn.clientName + " registered as '" + srvName + "'");
 		server.add(srvName);
 		
 		ServerConnectedEvent event = new ServerConnectedEvent(srvName);
@@ -109,7 +118,7 @@ public class CTSocketServer implements Runnable {
 		if (!server.contains(srvName))
 			return;
 		
-		System.out.println("[CTSocketsBungee][INFO]: Server '" + srvName + "' disconnected");
+		plugin.getLogger().info("Server '" + srvName + "' disconnected");
 		server.remove(srvName);
 
 		ServerDisconnectedEvent event = new ServerDisconnectedEvent(srvName);
@@ -125,7 +134,8 @@ public class CTSocketServer implements Runnable {
 		packet.put("sender", sender);
 		packet.put("command", command);	
 		
-		System.out.print("[CTSockets][INFO]: Send command from '" + sender + "' to '" + target + "'\r\n" + command + "\r\n");
+		if (debug)
+			plugin.getLogger().info("Send command from '" + sender + "' to '" + target + "'\r\n" + command + "\r\n");
 		
 		for (ConnectionHandler client : clients.values()) {
 			if (!client.isConnected() || !client.isRegistered() || !client.getName().equalsIgnoreCase(target)) continue;
@@ -138,7 +148,8 @@ public class CTSocketServer implements Runnable {
 		packet.put("sender", sender);
 		packet.put("message", message);	
 		
-		System.out.print("[CTSockets][INFO]: Send message from '" + sender + "' to '" + target + "'\r\n" + message + "\r\n");
+		if (debug)
+			plugin.getLogger().info("Send message from '" + sender + "' to '" + target + "'\r\n" + message + "\r\n");
 		
 		for (ConnectionHandler client : clients.values()) {
 			if (!client.isConnected() || !client.isRegistered() || !client.getName().equalsIgnoreCase(target)) continue;

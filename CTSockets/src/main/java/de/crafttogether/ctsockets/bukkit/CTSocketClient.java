@@ -26,14 +26,19 @@ import net.md_5.bungee.api.ChatColor;
  */
 
 public class CTSocketClient implements Runnable {
+	private static CTSocketClient socketClient;
+	private CTSockets plugin;
+	
 	private String clientName;
 	private String host;
 	private int port;
-	private int connectionAttempts;
+	//private int connectionAttempts;
 	private boolean shutdown;
 	private boolean isConnected;
 	private boolean isRegistered;
 	private boolean whitelisted;
+	
+	private boolean debug;
 	
 	public ArrayList<String> server;
 	public HashMap<Long, CommandSender> pingRequests;
@@ -43,6 +48,9 @@ public class CTSocketClient implements Runnable {
 	private BufferedReader reader;
 
 	public CTSocketClient(String host, int port, String clientName) {
+		socketClient = this;
+		
+		this.plugin = CTSockets.getInstance();
 		this.server = new ArrayList<String>();
 		this.pingRequests = new HashMap<Long, CommandSender>();
 		
@@ -50,9 +58,10 @@ public class CTSocketClient implements Runnable {
 		this.host = host;
 		this.port = port;
 	    this.whitelisted = true;
+	    
+	    this.debug = plugin.getConfig().getBoolean("Settings.debug");
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		shutdown = false;
@@ -69,7 +78,7 @@ public class CTSocketClient implements Runnable {
 			if (e.getMessage().contains("Connection refused"))
 				message = "Connection refused";
 			
-			System.out.println("[CTSockets][ERROR]: Could not connect to " + host + ":" + port + " (" + message + ")");
+			plugin.getLogger().warning("Error: Could not connect to " + host + ":" + port + " (" + message + ")");
 			
 			if (message == e.getMessage())
 				e.printStackTrace();
@@ -100,7 +109,7 @@ public class CTSocketClient implements Runnable {
 					String err = packet.getString("error");
 					
 					if (err.equalsIgnoreCase("NOT_WHITELISTED")) {
-						System.out.println("[CTSockets][ERROR]: IP-Adress not whitelisted");
+						plugin.getLogger().warning("Error: IP-Adress not whitelisted");
 						whitelisted = false;
 					}
 					continue;
@@ -110,7 +119,7 @@ public class CTSocketClient implements Runnable {
 					JSONArray serverlist = packet.getJSONArray("serverlist");
 					
 					if (serverlist == null) {
-						System.out.println("[CTSockets][ERROR]: Unable to read serverlist");
+						plugin.getLogger().warning("Error: Unable to read serverlist");
 						continue;
 					}
 					
@@ -119,9 +128,9 @@ public class CTSocketClient implements Runnable {
 							server.add(String.valueOf(srvName));
 					}
 					
-					System.out.println("[CTSockets][INFO]: Connection successful!");
+					plugin.getLogger().info("Connection successful!");
 					isRegistered = true;
-					connectionAttempts = 0;					
+					//connectionAttempts = 0;					
 					continue;
 				}
 				
@@ -131,7 +140,9 @@ public class CTSocketClient implements Runnable {
 					if (!server.contains(srvName))
 						server.add(String.valueOf(srvName));
 					
-					System.out.println("[CTSockets][INFO]: #ServerConnectedEvent (" + srvName + ")");
+					if (debug)
+						plugin.getLogger().info("#ServerConnectedEvent (" + srvName + ")");
+					
 					ServerConnectedEvent event = new ServerConnectedEvent(srvName, true);
 					Bukkit.getPluginManager().callEvent(event);
 					continue;
@@ -143,7 +154,9 @@ public class CTSocketClient implements Runnable {
 					if (server.contains(srvName))
 						server.remove(String.valueOf(srvName));
 					
-					System.out.println("[CTSockets][INFO]: #ServerDisconnectedEvent (" + srvName + ")");
+					if (debug)
+						plugin.getLogger().info("#ServerDisconnectedEvent (" + srvName + ")");
+					
 					ServerDisconnectedEvent event = new ServerDisconnectedEvent(srvName, true);
 					Bukkit.getPluginManager().callEvent(event);
 					continue;
@@ -153,8 +166,10 @@ public class CTSocketClient implements Runnable {
 					String sender = packet.getString("sender");
 					String command = packet.getString("command");
 					
-					System.out.println("Received Command from: " + sender);
-					System.out.println(command);
+					if (debug) {
+						plugin.getLogger().info("Received Command from: " + sender);
+						plugin.getLogger().info(command);
+					}
 					
 					CommandReceivedEvent event = new CommandReceivedEvent(sender, command, true);
 					Bukkit.getPluginManager().callEvent(event);
@@ -169,7 +184,7 @@ public class CTSocketClient implements Runnable {
 				}
 				
 				if (packet == null || !packet.has("message") || !packet.has("sender")) {
-					System.out.println("[CTSockets][WARNING]: INVALID PACKET (Received from 'proxy'");
+					plugin.getLogger().warning("INVALID PACKET (Received from 'proxy')");
 					System.out.println(inputLine);
 				}
 				
@@ -187,15 +202,17 @@ public class CTSocketClient implements Runnable {
 					if (pingRequests.containsKey(pingID)) {
 						CommandSender pingSender = pingRequests.get(pingID);
 						Long time = System.currentTimeMillis() - pingID;
-						pingSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6Pong &eerhalten. (" + time + "ms)"));
+						pingSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6Pong &ereceived. (" + time + "ms)"));
 						pingRequests.remove(pingID);
 					}
 					continue;
 				}
 				
-				System.out.println("[CTSockets][INFO]: Received message from '" + clientName + "' -> PACKET[");
-				System.out.println("Sender: " + sender);
-				System.out.println("Message: " + message + "]");
+				if (debug) {
+					plugin.getLogger().info("Received message from '" + clientName + "' -> PACKET[");
+					plugin.getLogger().info("Sender: " + sender);
+					plugin.getLogger().info("Message: " + message + "]");
+				}
 				
 				MessageReceivedEvent event = new MessageReceivedEvent(sender, message, true);
 				Bukkit.getPluginManager().callEvent(event);
@@ -206,7 +223,7 @@ public class CTSocketClient implements Runnable {
 		}
 		
 		if (isConnected && !shutdown)
-			System.out.println("[CTSockets][INFO]: lost connection to proxy");
+			plugin.getLogger().warning("lost connection to proxy");
 
 		writer.flush();
 	    writer.close();
@@ -223,7 +240,7 @@ public class CTSocketClient implements Runnable {
 	}
 	
 	public void connect() {
-		System.out.println("[CTSockets][INFO]: Connecting to " + host + ":" + port + "...");
+		plugin.getLogger().info("Connecting to " + host + ":" + port + "...");
 		CTSockets.getInstance().getServer().getScheduler().runTaskAsynchronously(CTSockets.getInstance(), this);
 	}
 	
@@ -234,21 +251,21 @@ public class CTSocketClient implements Runnable {
 		final CTSocketClient client = this;
 		int delay = 3;
 		
-		connectionAttempts++;
-		
-		if (connectionAttempts > 10) delay = 5;
-		if (connectionAttempts > 15) delay = 10;
-		if (connectionAttempts > 21) delay = 15;
+		//connectionAttempts++;
+		//if (connectionAttempts > 10) delay = 5;
+		//if (connectionAttempts > 15) delay = 10;
+		//if (connectionAttempts > 21) delay = 15;
 		
 		Bukkit.getScheduler().runTaskLater(CTSockets.getInstance(), new Runnable() {
 			@Override
 			public void run() {
-				System.out.println("[CTSockets][INFO]: Try to reconnect");
+				plugin.getLogger().info("Try to reconnect");
 				client.connect();
 			}
 		}, delay * 20L);
 		
-		System.out.println("[CTSockets][INFO]: Try to reconnect to " + host + ":" + port + " in " + delay + " Seconds");
+		if (debug)
+			plugin.getLogger().info("Try to reconnect to " + host + ":" + port + " in " + delay + " Seconds");
 	}
 
 	public void close() {
@@ -300,5 +317,9 @@ public class CTSocketClient implements Runnable {
 	
 	public boolean isRegistered() {
 		return isRegistered;
+	}
+
+	public static CTSocketClient getInstance() {
+		return socketClient;
 	}
 }

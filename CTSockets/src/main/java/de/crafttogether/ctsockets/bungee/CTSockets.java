@@ -25,9 +25,10 @@ import net.md_5.bungee.config.YamlConfiguration;
 
 public class CTSockets extends Plugin {
 	private static CTSockets plugin;
+	private static CTSocketServer socketServer;
 	
-    public static CTSocketServer socketServer;
     public static Configuration config;
+    public static Configuration messages;
     
     /**
      * @hidden
@@ -57,8 +58,9 @@ public class CTSockets extends Plugin {
         if (!getDataFolder().exists()) {
         	this.getDataFolder().mkdir();
         }
-        
+
         File configFile = new File(getDataFolder(), "config.yml");
+        File msgFile = new File(getDataFolder(), "config.yml");
         
         try {
             if (!configFile.exists()) {
@@ -67,11 +69,19 @@ public class CTSockets extends Plugin {
                 OutputStream os = new FileOutputStream(configFile);
                 ByteStreams.copy(is, os);
             }
+            
+            if (!msgFile.exists()) {
+            	msgFile.createNewFile();
+                InputStream is = getResourceAsStream("bungeemessages.yml");
+                OutputStream os = new FileOutputStream(msgFile);
+                ByteStreams.copy(is, os);
+            }
         } catch (IOException e) {
-            throw new RuntimeException("Unable to create config.yml", e);
+            throw new RuntimeException("Unable to create messages.yml", e);
         }
         try {
         	config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new InputStreamReader(new FileInputStream(configFile), "UTF8"));
+        	messages = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new InputStreamReader(new FileInputStream(msgFile), "UTF8"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -119,6 +129,14 @@ public class CTSockets extends Plugin {
 	 */
 	public Configuration getConfig() {
 		return config;
+	}
+	
+	/**
+	 * Returns the message configuration of the plugin
+	 * @return Configuration
+	 */
+	public Configuration getMessages() {
+		return messages;
 	}
 	
 	/**

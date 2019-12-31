@@ -22,6 +22,8 @@ import net.md_5.bungee.api.ProxyServer;
  */
 
 public class ConnectionHandler implements Runnable {
+	private CTSockets plugin;
+	
 	private UUID clientID;
 	private Socket client;
 	private PrintWriter writer;
@@ -30,16 +32,21 @@ public class ConnectionHandler implements Runnable {
 	private boolean isConnected;
 	private boolean isRegistered;
 	
+	private boolean debug;
+	
 	public String clientName;
 	
 	public ConnectionHandler(Socket client) {
+		this.plugin = CTSockets.getInstance();
+		
 		this.client = client;
 		this.clientID = UUID.randomUUID();
-		this.clientName = "IP(" + client.getInetAddress().getHostAddress() + ") + " + this.clientID;
+		this.clientName = "IP(" + client.getInetAddress().getHostAddress() + ")";
 		this.isConnected = true;
 		this.isRegistered = false;
 		
-		this.whitelist = CTSockets.config.getStringList("Whitelist");
+		this.debug = plugin.getConfig().getBoolean("Settings.debug");
+		this.whitelist = plugin.getConfig().getStringList("Whitelist");
 		
 		try {
 			this.writer = new PrintWriter(client.getOutputStream(), true);
@@ -49,10 +56,12 @@ public class ConnectionHandler implements Runnable {
 		}
 		
 		if (checkWhiteList(client.getInetAddress().getHostAddress())) {
-			System.out.println("[CTSocketsBungee][INFO]: " + clientName + ") connected");
-			ProxyServer.getInstance().getScheduler().runAsync(CTSockets.getInstance(), this);
+			if (debug)
+				plugin.getLogger().info(clientName + " connected");
+			
+			ProxyServer.getInstance().getScheduler().runAsync(plugin, this);
 		} else {
-			System.out.println("[CTSocketsBungee][WARNING]: " + clientName + " tried to connect but is not whitelisted!");
+			plugin.getLogger().warning(clientName + " tried to connect but is not whitelisted!");
 			sendError("NOT_WHITELISTED");
 			
 			try {
@@ -94,7 +103,9 @@ public class ConnectionHandler implements Runnable {
 						String command = packet.getString("command");
 						
 						if (CTSocketServer.getInstance().server.contains(target)) {
-							System.out.print("[CTSockets][INFO]: Try to redirect command from '" + sender + "' to '" + target);
+							if (debug)
+								plugin.getLogger().info("Try to redirect command from '" + sender + "' to '" + target);
+							
 							CTSocketServer.getInstance().sendCommand(command, sender, target);
 							
 							CommandForwardedEvent forwardedEvent = new CommandForwardedEvent(sender, target, command);
@@ -103,16 +114,18 @@ public class ConnectionHandler implements Runnable {
 						}
 
 						// TODO: Send to client?
-						System.out.println("[CTSockets][ERROR]: Server '" + target + "' is not connected.");
-						System.out.println("[CTSockets][ERROR]: Cannot forward command from '" + sender + "' to '" + target + "'");
-						System.out.println(command);
+						if (debug) {
+							plugin.getLogger().warning("Server '" + target + "' is not connected.");
+							plugin.getLogger().warning("Cannot forward command from '" + sender + "' to '" + target + "'");
+							plugin.getLogger().warning(command);
+						}
 						
 						continue;
 					}
 					
 					if (packet == null || !packet.has("message") || !packet.has("sender") || !packet.has("target")) {
-						System.out.println("[CTSockets][WARNING]: INVALID PACKET (Received from '" + clientName + "')");
-						System.out.println(inputLine);
+						plugin.getLogger().warning("INVALID PACKET (Received from '" + clientName + "')");
+						plugin.getLogger().warning(inputLine);
 					}
 
 					String sender = packet.getString("sender");
@@ -138,7 +151,9 @@ public class ConnectionHandler implements Runnable {
 					
 					else {
 						if (CTSocketServer.getInstance().server.contains(target)) {
-							System.out.print("[CTSockets][INFO]: Try to redirect message from '" + sender + "' to '" + target);
+							if (debug)
+								plugin.getLogger().info("Try to redirect message from '" + sender + "' to '" + target);
+							
 							CTSocketServer.getInstance().sendMessage(message, sender, target);
 							
 							MessageForwardedEvent forwardedEvent = new MessageForwardedEvent(sender, target, message);
@@ -147,9 +162,11 @@ public class ConnectionHandler implements Runnable {
 						}
 
 						// TODO: Send to client?
-						System.out.println("[CTSockets][ERROR]: Server '" + target + "' is not connected.");
-						System.out.println("[CTSockets][ERROR]: Cannot forward message from '" + sender + "' to '" + target + "'");
-						System.out.println(message);
+						if (debug) {
+							plugin.getLogger().warning("Server '" + target + "' is not connected.");
+							plugin.getLogger().warning("Cannot forward message from '" + sender + "' to '" + target + "'");
+							plugin.getLogger().warning(message);
+						}
 						
 						continue;
 					}
@@ -161,9 +178,9 @@ public class ConnectionHandler implements Runnable {
 			
 			if (isConnected) {
 				if (isRegistered)
-					System.out.println("[CTSocketsBungee][INFO]: Lost connection to Server '" + clientName + "'");
-				else
-					System.out.println("[CTSocketsBungee][INFO]: Lost connection to " + clientName);
+					plugin.getLogger().warning("Lost connection to Server '" + clientName + "'");
+				else if (debug)
+					plugin.getLogger().warning("Lost connection to " + clientName);
 	
 				disconnect();
 			}
@@ -211,7 +228,7 @@ public class ConnectionHandler implements Runnable {
 		if (wasRegistered)
 			CTSocketServer.getInstance().unregisterServer(this, clientName);
 		else
-			System.out.println("[CTSocketsBungee][INFO]: " + String.valueOf(clientName) + " disconnected");
+			System.out.println(String.valueOf(clientName) + " disconnected");
 		
 		CTSocketServer.getInstance().clientDisconnected(clientID);
 	}
