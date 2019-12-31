@@ -63,9 +63,7 @@ public class ConnectionHandler implements Runnable {
 	}
 
 	@Override
-	public void run() {
-		sendServerlist();
-		
+	public void run() {		
 		if (client.isConnected() && !client.isClosed()) {			
 			try {
 				String inputLine;
@@ -85,6 +83,8 @@ public class ConnectionHandler implements Runnable {
 						CTSocketServer.getInstance().registerServer(this, serverName);
 						clientName = serverName;
 						isRegistered = true;
+						System.out.println("send serverlist");
+						sendServerlist();
 						continue;
 					}
 					

@@ -34,11 +34,13 @@ public class CTSockets extends JavaPlugin {
 	public void onEnable() {		
 		plugin = this;
 		
-		System.out.println("CTSockets v" + this.getDescription().getVersion() + " enabled");
 		loadConfig();
+		new CommandHandler(this);
 		
 		socketClient = new CTSocketClient(config.getString("Settings.host"), config.getInt("Settings.port"), config.getString("Settings.name"));
 		socketClient.connect();
+		
+		System.out.println(this.getDescription().getName() + " v" + this.getDescription().getVersion() + " enabled");
 	}
 	
     /**
@@ -49,7 +51,7 @@ public class CTSockets extends JavaPlugin {
 		if (socketClient != null)
 			socketClient.close();
 		
-		System.out.println("CTSockets v" + this.getDescription().getVersion() + " disabled");
+		System.out.println(this.getDescription().getName() + " v" + this.getDescription().getVersion() + " disabled");
 	}
 	
 	private FileConfiguration loadConfig() {
@@ -87,6 +89,14 @@ public class CTSockets extends JavaPlugin {
     	return socketClient.server;
     }
     
+    /**
+     * Checks if connection is established
+     * @return Boolean
+     */
+    public boolean isConnected() {
+    	return socketClient.isRegistered();
+    }
+
     /**
      * Checks if given server is connected
      * @param serverName (String) 

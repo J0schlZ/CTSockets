@@ -36,11 +36,12 @@ public class CTSockets extends Plugin {
 	public void onEnable() {
     	plugin = this;
     	
-    	System.out.println("CTSockets v" + this.getDescription().getVersion() + " enabled");
 		loadConfig();
 		
 		socketServer = new CTSocketServer(config.getInt("Settings.port"));
 		getProxy().getScheduler().runAsync(this, socketServer);
+		
+		System.out.println(this.getDescription().getName() + " v" + this.getDescription().getVersion() + " enabled");
 	}
 	
     /**
@@ -49,7 +50,7 @@ public class CTSockets extends Plugin {
     @Override
 	public void onDisable() {
 		socketServer.close();
-		System.out.println("CTSockets v" + this.getDescription().getVersion() + " disabled");
+		System.out.println(this.getDescription().getName() + " v" + this.getDescription().getVersion() + " disabled");
     }
     
 	private Configuration loadConfig() {

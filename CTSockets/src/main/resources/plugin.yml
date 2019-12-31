@@ -4,3 +4,19 @@ main: de.crafttogether.ctsockets.bukkit.CTSockets
 version: 1.1.0
 author: J0schlZ
 website: https://www.craft-together.de/
+commands:
+  ctsockets:
+    description: Type "/ctsockets help" for more Information.
+    usage: /ctsockets help
+    aliases:
+    - cts
+permissions:
+  ctsockets.list:
+    description: List connected servers
+    default: op
+  ctsockets.ping:
+    description: Ping another server
+    default: op
+  ctsockets.sync:
+    description: Run command on another server
+    default: op

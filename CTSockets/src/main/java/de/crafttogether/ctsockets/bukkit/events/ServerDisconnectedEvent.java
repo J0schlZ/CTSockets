@@ -21,7 +21,7 @@ public final class ServerDisconnectedEvent extends Event
      * Get the servers name
      * @return serverName (String)
      */
-    public String getName() {
+    public String getServerName() {
         return serverName;
     }
     

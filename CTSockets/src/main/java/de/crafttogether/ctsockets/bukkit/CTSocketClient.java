@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import de.crafttogether.ctsockets.bukkit.events.MessageReceivedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerConnectedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerDisconnectedEvent;
 
@@ -98,7 +99,7 @@ public class CTSocketClient implements Runnable {
 				
 				if (packet != null && packet.has("serverlist")) {
 					JSONArray serverlist = packet.getJSONArray("serverlist");
-					
+					System.out.println("received serverlist");
 					if (serverlist == null) {
 						System.out.println("[CTSockets][ERROR]: Unable to read serverlist");
 						continue;
@@ -144,9 +145,28 @@ public class CTSocketClient implements Runnable {
 					System.out.println(inputLine);
 				}
 				
+				String sender = packet.getString("sender");
+				String message = packet.getString("message");
+
+				if (message.startsWith("#PING|")) {
+					sendMessage(message.replace("PING", "PONG"), sender);
+					continue;
+				}
+
+				if (message.startsWith("#PONG|")) {
+					String[] splitted = message.split("|");
+					String pingID = splitted[1];
+					System.out.println("PONG erhalten! Was mach ich damit?!");
+					System.out.println(pingID);
+					continue;
+				}
+				
 				System.out.println("[CTSockets][INFO]: Received from '" + clientName + "' -> PACKET[");
-				System.out.println("Sender: " + packet.getString("sender"));
-				System.out.println("Message: " + packet.getString("message") + "]");
+				System.out.println("Sender: " + sender);
+				System.out.println("Message: " + message + "]");
+				
+				MessageReceivedEvent event = new MessageReceivedEvent(sender, message, true);
+				Bukkit.getPluginManager().callEvent(event);
 			}
 		} catch (Exception e) {
 			if (!e.getMessage().equalsIgnoreCase("socket closed") && !e.getMessage().equalsIgnoreCase("connection reset"))

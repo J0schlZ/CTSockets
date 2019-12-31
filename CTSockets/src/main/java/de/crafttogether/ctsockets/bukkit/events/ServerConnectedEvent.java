@@ -21,7 +21,7 @@ public final class ServerConnectedEvent extends Event
      * Get the servers name
      * @return serverName (String)
      */
-    public String getName() {
+    public String getServerName() {
         return serverName;
     }
     
