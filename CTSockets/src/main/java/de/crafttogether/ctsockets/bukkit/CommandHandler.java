@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.json.JSONObject;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -54,7 +55,7 @@ public class CommandHandler implements TabExecutor {
 			if (connectedServers.size() < 1)
 				sendMessage(sender, "&cEs sind keine weiteren Server verbunden.");
 			else {
-				sendMessage(sender, "&6Verbundene Server&e:");
+				sendMessage(sender, "&6Verbundene Server&f:");
 				
 				for (String server : connectedServers)
 					sendMessage(sender, "&f- &e" + server);
@@ -83,7 +84,7 @@ public class CommandHandler implements TabExecutor {
 				for(String server : connectedServers) {
 					if (server.equalsIgnoreCase(args[1])) {
 						client.pingRequests.put(pingID, sender);
-						plugin.sendToServer(server, "#PING-" + pingID);	
+						client.sendMessage("#PING-" + pingID, server);
 						
 						sendMessage(sender, "&6Ping &egesendet...");
 						return true;					
@@ -105,8 +106,42 @@ public class CommandHandler implements TabExecutor {
 				return true;
 			}
 			
-			sendMessage(sender, "&cComing soon... ^^");
-			return true;
+			if (args.length < 2) {
+				sendMessage(sender, "&cBitte gebe den Namen des gewünschten Server an.");
+				return true;
+			}
+			else {
+				ArrayList<String> connectedServers = plugin.getConnectedServers();
+				long pingID = System.currentTimeMillis();
+				
+				for(String server : connectedServers) {
+					if (server.equalsIgnoreCase(args[1])) {
+						
+						if (args.length < 3) {
+							sendMessage(sender, "&cBitte gebe einen auszuführenden Befehl an.");
+							return true;
+						}
+						else {
+							StringBuilder cmdString = new StringBuilder();
+							
+							for (int i = 2; i < args.length; i++)
+								cmdString.append(args[i] + " ");
+							
+							JSONObject packet = new JSONObject();
+							packet.put("sender", client.getName());
+							packet.put("target", args[1]);
+							packet.put("command", cmdString.toString());
+							client.sendPacket(packet);
+							
+							sendMessage(sender, "&2Befehl gesendet...");
+							return true;	
+						}
+					}
+				}
+				
+				sendMessage(sender, "&cEs ist kein Server mit dem Namen '&6" + args[1] + "' &cverbunden.");
+				return true;
+			}
 		}
 		
 		return false;

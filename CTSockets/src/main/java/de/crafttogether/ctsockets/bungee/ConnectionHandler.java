@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import de.crafttogether.ctsockets.bungee.events.CommandForwardedEvent;
 import de.crafttogether.ctsockets.bungee.events.MessageForwardedEvent;
 import de.crafttogether.ctsockets.bungee.events.MessageReceivedEvent;
 import net.md_5.bungee.api.ProxyServer;
@@ -84,6 +85,28 @@ public class ConnectionHandler implements Runnable {
 						clientName = serverName;
 						isRegistered = true;
 						sendServerlist();
+						continue;
+					}
+					
+					if (packet != null && packet.has("command") && packet.has("sender") && packet.has("target")) {
+						String sender = packet.getString("sender");
+						String target = packet.getString("target");
+						String command = packet.getString("command");
+						
+						if (CTSocketServer.getInstance().server.contains(target)) {
+							System.out.print("[CTSockets][INFO]: Try to redirect command from '" + sender + "' to '" + target);
+							CTSocketServer.getInstance().sendCommand(command, sender, target);
+							
+							CommandForwardedEvent forwardedEvent = new CommandForwardedEvent(sender, target, command);
+					    	ProxyServer.getInstance().getPluginManager().callEvent(forwardedEvent);
+					    	continue;
+						}
+
+						// TODO: Send to client?
+						System.out.println("[CTSockets][ERROR]: Server '" + target + "' is not connected.");
+						System.out.println("[CTSockets][ERROR]: Cannot forward command from '" + sender + "' to '" + target + "'");
+						System.out.println(command);
+						
 						continue;
 					}
 					

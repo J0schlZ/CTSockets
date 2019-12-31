@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -14,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import de.crafttogether.ctsockets.bukkit.events.CommandReceivedEvent;
 import de.crafttogether.ctsockets.bukkit.events.MessageReceivedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerConnectedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerDisconnectedEvent;
@@ -50,6 +52,7 @@ public class CTSocketClient implements Runnable {
 	    this.whitelisted = true;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		shutdown = false;
@@ -146,6 +149,25 @@ public class CTSocketClient implements Runnable {
 					continue;
 				}
 				
+				if (packet != null && packet.has("command") && packet.has("sender")) {
+					String sender = packet.getString("sender");
+					String command = packet.getString("command");
+					
+					System.out.println("Received Command from: " + sender);
+					System.out.println(command);
+					
+					CommandReceivedEvent event = new CommandReceivedEvent(sender, command, true);
+					Bukkit.getPluginManager().callEvent(event);
+					
+					Bukkit.getScheduler().callSyncMethod(CTSockets.getInstance(), new Callable<Boolean>() {
+						@Override
+						public Boolean call() throws Exception {
+							return Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+						}
+					});
+					continue;
+				}
+				
 				if (packet == null || !packet.has("message") || !packet.has("sender")) {
 					System.out.println("[CTSockets][WARNING]: INVALID PACKET (Received from 'proxy'");
 					System.out.println(inputLine);
@@ -171,7 +193,7 @@ public class CTSocketClient implements Runnable {
 					continue;
 				}
 				
-				System.out.println("[CTSockets][INFO]: Received from '" + clientName + "' -> PACKET[");
+				System.out.println("[CTSockets][INFO]: Received message from '" + clientName + "' -> PACKET[");
 				System.out.println("Sender: " + sender);
 				System.out.println("Message: " + message + "]");
 				
@@ -242,17 +264,6 @@ public class CTSocketClient implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
-	private void sendPacket(JSONObject packet) {
-		String strPacket = packet.toString();
-		
-		// TODO: Exception?
-		if (strPacket == null)
-			return;
-		
-		writer.println(strPacket + "\r\n");
-		writer.flush();
-	}
 	
 	private void register(String clientName) {
 		JSONObject packet = new JSONObject();
@@ -266,6 +277,21 @@ public class CTSocketClient implements Runnable {
 		packet.put("target", target);
 		packet.put("message", message);
 		sendPacket(packet);
+	}
+
+	public void sendPacket(JSONObject packet) {
+		String strPacket = packet.toString();
+		
+		// TODO: Exception?
+		if (strPacket == null)
+			return;
+		
+		writer.println(strPacket + "\r\n");
+		writer.flush();
+	}
+	
+	public String getName() {
+		return clientName;
 	}
 	
 	public boolean isConnected() {

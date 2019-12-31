@@ -119,17 +119,24 @@ public class CTSocketServer implements Runnable {
 		packet.put("server_disconnected", srvName);
 		broadcast(packet);
 	}
-	
-	private JSONObject buildMessagePacket(String message, String sender) {
+
+	public void sendCommand(String command, String sender, String target) {
 		JSONObject packet = new JSONObject();
 		packet.put("sender", sender);
-		packet.put("message", message);	
-		return packet;
+		packet.put("command", command);	
+		
+		System.out.print("[CTSockets][INFO]: Send command from '" + sender + "' to '" + target + "'\r\n" + command + "\r\n");
+		
+		for (ConnectionHandler client : clients.values()) {
+			if (!client.isConnected() || !client.isRegistered() || !client.getName().equalsIgnoreCase(target)) continue;
+				client.sendPacket(packet);
+		}
 	}
 	
 	public void sendMessage(String message, String sender, String target) {
-		JSONObject packet = buildMessagePacket(message, sender);
-		if (packet == null) return;
+		JSONObject packet = new JSONObject();
+		packet.put("sender", sender);
+		packet.put("message", message);	
 		
 		System.out.print("[CTSockets][INFO]: Send message from '" + sender + "' to '" + target + "'\r\n" + message + "\r\n");
 		
@@ -140,8 +147,9 @@ public class CTSocketServer implements Runnable {
 	}
 	
 	public void broadcast(String message, String sender) {
-		JSONObject packet = buildMessagePacket(message, sender);
-		if (packet == null) return;
+		JSONObject packet = new JSONObject();
+		packet.put("sender", sender);
+		packet.put("message", message);	
 		broadcast(packet);
 	}
 	
