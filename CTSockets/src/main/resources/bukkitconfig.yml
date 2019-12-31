@@ -1,5 +1,5 @@
 Settings:
-  debug: true
+  debug: false
   host: 127.0.0.1
   port: 8321
   name: 'server1'
