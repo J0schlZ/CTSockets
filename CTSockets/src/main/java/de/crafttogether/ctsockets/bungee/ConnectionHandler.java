@@ -70,7 +70,7 @@ public class ConnectionHandler implements Runnable {
 				while ((inputLine = reader.readLine()) != null) {
 					if (inputLine.strip().length() < 1)
 						continue;
-					System.out.println(inputLine);
+					
 					JSONObject packet = null;
 					try {
 					     packet = new JSONObject(inputLine);

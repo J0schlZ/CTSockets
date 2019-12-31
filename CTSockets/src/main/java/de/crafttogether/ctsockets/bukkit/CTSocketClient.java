@@ -183,9 +183,19 @@ public class CTSocketClient implements Runnable {
 				e.printStackTrace();
 		}
 		
-		if (isConnected & !shutdown)
+		if (isConnected && !shutdown)
 			System.out.println("[CTSockets][INFO]: lost connection to proxy");
 
+		writer.flush();
+	    writer.close();
+		
+		try {
+			reader.close();
+			socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		isConnected = false;
 		retryConnect();
 	}
