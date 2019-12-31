@@ -70,7 +70,7 @@ public class ConnectionHandler implements Runnable {
 				while ((inputLine = reader.readLine()) != null) {
 					if (inputLine.strip().length() < 1)
 						continue;
-					
+					System.out.println(inputLine);
 					JSONObject packet = null;
 					try {
 					     packet = new JSONObject(inputLine);
@@ -83,7 +83,6 @@ public class ConnectionHandler implements Runnable {
 						CTSocketServer.getInstance().registerServer(this, serverName);
 						clientName = serverName;
 						isRegistered = true;
-						System.out.println("send serverlist");
 						sendServerlist();
 						continue;
 					}
@@ -121,7 +120,7 @@ public class ConnectionHandler implements Runnable {
 							
 							MessageForwardedEvent forwardedEvent = new MessageForwardedEvent(sender, target, message);
 					    	ProxyServer.getInstance().getPluginManager().callEvent(forwardedEvent);
-							return;
+					    	continue;
 						}
 
 						// TODO: Send to client?
@@ -156,6 +155,7 @@ public class ConnectionHandler implements Runnable {
 			return;
 		
 		writer.println(strPacket + "\r\n");
+		writer.flush();
 	}
 	
 	public void sendServerlist() {

@@ -1,9 +1,7 @@
 package de.crafttogether.ctsockets.bukkit;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -13,11 +11,11 @@ import net.md_5.bungee.api.ChatColor;
 
 public class CommandHandler implements TabExecutor {
 	private CTSockets plugin;
-	private HashMap<UUID, CommandSender> pingRequests;
+	private CTSocketClient client;
 	
-	public CommandHandler(CTSockets plugin) {
+	public CommandHandler(CTSockets plugin, CTSocketClient client) {
 		this.plugin = plugin;
-		this.pingRequests = new HashMap<UUID, CommandSender>();
+		this.client = client;
 		
 		plugin.getCommand("ctsockets").setExecutor(this);
 		plugin.getCommand("ctsockets").setTabCompleter(this);
@@ -80,19 +78,19 @@ public class CommandHandler implements TabExecutor {
 			}
 			else {
 				ArrayList<String> connectedServers = plugin.getConnectedServers();
+				long pingID = System.currentTimeMillis();
 				
 				for(String server : connectedServers) {
 					if (server.equalsIgnoreCase(args[1])) {
-						UUID pingID = UUID.randomUUID();
-						pingRequests.put(pingID, sender);
-						plugin.sendToServer(server, "#PING|" + pingID);						
+						client.pingRequests.put(pingID, sender);
+						plugin.sendToServer(server, "#PING-" + pingID);	
+						
+						sendMessage(sender, "&6Ping &egesendet...");
+						return true;					
 					}
-					
-					sendMessage(sender, "&6Ping &egesendet...");
-					return true;
 				}
 				
-				sendMessage(sender, "&cEs ist kein Server mit diesem Namen verbunden.");
+				sendMessage(sender, "&cEs ist kein Server mit dem Namen '&6" + args[1] + "' &cverbunden.");
 				return true;
 			}
 					

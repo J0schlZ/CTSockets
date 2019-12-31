@@ -33,13 +33,12 @@ public class CTSockets extends JavaPlugin {
 	@Override
 	public void onEnable() {		
 		plugin = this;
-		
 		loadConfig();
-		new CommandHandler(this);
 		
 		socketClient = new CTSocketClient(config.getString("Settings.host"), config.getInt("Settings.port"), config.getString("Settings.name"));
 		socketClient.connect();
 		
+		new CommandHandler(this, socketClient);
 		System.out.println(this.getDescription().getName() + " v" + this.getDescription().getVersion() + " enabled");
 	}
 	

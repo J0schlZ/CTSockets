@@ -6,8 +6,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +17,7 @@ import org.json.JSONObject;
 import de.crafttogether.ctsockets.bukkit.events.MessageReceivedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerConnectedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerDisconnectedEvent;
+import net.md_5.bungee.api.ChatColor;
 
 /**
  * @hidden
@@ -31,12 +34,16 @@ public class CTSocketClient implements Runnable {
 	private boolean whitelisted;
 	
 	public ArrayList<String> server;
+	public HashMap<Long, CommandSender> pingRequests;
 	
 	private Socket socket;
 	private PrintWriter writer;
 	private BufferedReader reader;
 
 	public CTSocketClient(String host, int port, String clientName) {
+		this.server = new ArrayList<String>();
+		this.pingRequests = new HashMap<Long, CommandSender>();
+		
 		this.clientName = String.valueOf(clientName);
 		this.host = host;
 		this.port = port;
@@ -48,7 +55,6 @@ public class CTSocketClient implements Runnable {
 		shutdown = false;
 		isConnected = false;
 		isRegistered = false;
-		server = new ArrayList<String>();
 		
 	    try {
 	    	socket = new Socket(host, port);
@@ -99,7 +105,7 @@ public class CTSocketClient implements Runnable {
 				
 				if (packet != null && packet.has("serverlist")) {
 					JSONArray serverlist = packet.getJSONArray("serverlist");
-					System.out.println("received serverlist");
+					
 					if (serverlist == null) {
 						System.out.println("[CTSockets][ERROR]: Unable to read serverlist");
 						continue;
@@ -148,16 +154,20 @@ public class CTSocketClient implements Runnable {
 				String sender = packet.getString("sender");
 				String message = packet.getString("message");
 
-				if (message.startsWith("#PING|")) {
+				if (message.startsWith("#PING-")) {
 					sendMessage(message.replace("PING", "PONG"), sender);
 					continue;
 				}
 
-				if (message.startsWith("#PONG|")) {
-					String[] splitted = message.split("|");
-					String pingID = splitted[1];
-					System.out.println("PONG erhalten! Was mach ich damit?!");
-					System.out.println(pingID);
+				if (message.startsWith("#PONG-")) {
+					Long pingID = Long.parseLong(message.replace("#PONG-", ""));
+					
+					if (pingRequests.containsKey(pingID)) {
+						CommandSender pingSender = pingRequests.get(pingID);
+						Long time = System.currentTimeMillis() - pingID;
+						pingSender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6Pong &eerhalten. (" + time + "ms)"));
+						pingRequests.remove(pingID);
+					}
 					continue;
 				}
 				
@@ -198,7 +208,7 @@ public class CTSocketClient implements Runnable {
 		if (connectionAttempts > 15) delay = 10;
 		if (connectionAttempts > 21) delay = 15;
 		
-		Bukkit.getScheduler().runTaskLaterAsynchronously(CTSockets.getInstance(), new Runnable() {
+		Bukkit.getScheduler().runTaskLater(CTSockets.getInstance(), new Runnable() {
 			@Override
 			public void run() {
 				System.out.println("[CTSockets][INFO]: Try to reconnect");
@@ -231,6 +241,7 @@ public class CTSocketClient implements Runnable {
 			return;
 		
 		writer.println(strPacket + "\r\n");
+		writer.flush();
 	}
 	
 	private void register(String clientName) {
