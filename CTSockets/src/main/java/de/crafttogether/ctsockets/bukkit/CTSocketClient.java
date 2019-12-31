@@ -32,10 +32,11 @@ public class CTSocketClient implements Runnable {
 	private String clientName;
 	private String host;
 	private int port;
-	//private int connectionAttempts;
+	private int connectionAttempts;
 	private boolean shutdown;
 	private boolean isConnected;
 	private boolean isRegistered;
+	private boolean isReconnecting;
 	private boolean whitelisted;
 	
 	private boolean debug;
@@ -58,6 +59,7 @@ public class CTSocketClient implements Runnable {
 		this.host = host;
 		this.port = port;
 	    this.whitelisted = true;
+	    this.isReconnecting = false;
 	    
 	    this.debug = plugin.getConfig().getBoolean("Settings.debug");
 	}
@@ -78,18 +80,19 @@ public class CTSocketClient implements Runnable {
 			if (e.getMessage().contains("Connection refused"))
 				message = "Connection refused";
 			
+			if (!isReconnecting)
 			plugin.getLogger().warning("Error: Could not connect to " + host + ":" + port + " (" + message + ")");
 			
 			if (message == e.getMessage())
 				e.printStackTrace();
+			
+			closeConection();
+			retryConnect();
+			return;
 		}
 	    
-	    if (socket == null || !socket.isConnected() && !socket.isClosed()) {
-	    	retryConnect();
-	    	return;
-	    }
-	    
 		isConnected = true;
+		isReconnecting = false;
 	    register(clientName);
 	    	
 		try {
@@ -130,7 +133,7 @@ public class CTSocketClient implements Runnable {
 					
 					plugin.getLogger().info("Connection successful!");
 					isRegistered = true;
-					//connectionAttempts = 0;					
+					connectionAttempts = 0;					
 					continue;
 				}
 				
@@ -225,22 +228,14 @@ public class CTSocketClient implements Runnable {
 		if (isConnected && !shutdown)
 			plugin.getLogger().warning("lost connection to proxy");
 
-		writer.flush();
-	    writer.close();
-		
-		try {
-			reader.close();
-			socket.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		isConnected = false;
+		closeConection();
 		retryConnect();
 	}
 	
 	public void connect() {
-		plugin.getLogger().info("Connecting to " + host + ":" + port + "...");
+		if (!isReconnecting)
+			plugin.getLogger().info("Connecting to " + host + ":" + port + "...");
+		
 		CTSockets.getInstance().getServer().getScheduler().runTaskAsynchronously(CTSockets.getInstance(), this);
 	}
 	
@@ -249,17 +244,19 @@ public class CTSocketClient implements Runnable {
 			return;
 		
 		final CTSocketClient client = this;
-		int delay = 3;
+		int delay = 1;
 		
-		//connectionAttempts++;
-		//if (connectionAttempts > 10) delay = 5;
-		//if (connectionAttempts > 15) delay = 10;
-		//if (connectionAttempts > 21) delay = 15;
+		connectionAttempts++;
+		if (connectionAttempts > 60) delay = 3;
+		
+		if (!isReconnecting)
+			plugin.getLogger().info("Try to reconnect");
+		
+		isReconnecting = true;
 		
 		Bukkit.getScheduler().runTaskLater(CTSockets.getInstance(), new Runnable() {
 			@Override
 			public void run() {
-				plugin.getLogger().info("Try to reconnect");
 				client.connect();
 			}
 		}, delay * 20L);
@@ -270,13 +267,23 @@ public class CTSocketClient implements Runnable {
 
 	public void close() {
 		this.shutdown = true;
+		this.closeConection();
+	}
+	
+	private void closeConection() {	
+		isConnected = false;
+		isRegistered = false;
 		
-		writer.flush();
-	    writer.close();
-	    
+		if (writer != null) {
+			writer.flush();
+			writer.close();
+		}
+		
 		try {
-			reader.close();
-			socket.close();
+			if (reader != null)
+				reader.close();
+			if (socket != null)
+				socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

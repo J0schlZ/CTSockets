@@ -228,7 +228,7 @@ public class ConnectionHandler implements Runnable {
 		if (wasRegistered)
 			CTSocketServer.getInstance().unregisterServer(this, clientName);
 		else
-			System.out.println(String.valueOf(clientName) + " disconnected");
+			plugin.getLogger().warning(String.valueOf(clientName) + " disconnected");
 		
 		CTSocketServer.getInstance().clientDisconnected(clientID);
 	}
