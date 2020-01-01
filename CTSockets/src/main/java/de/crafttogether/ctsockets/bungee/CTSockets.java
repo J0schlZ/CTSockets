@@ -99,7 +99,7 @@ public class CTSockets extends Plugin {
     
     /**
      * Checks if given server is connected
-     * @param serverName (String) 
+     * @param srvName (String) 
      * @return Boolean
      */
     public boolean isConnected(String srvName) {
@@ -140,7 +140,7 @@ public class CTSockets extends Plugin {
 	}
 	
 	/**
-	 * @return
+	 * @return plugin (CTSockets)
 	 */
 	public static CTSockets getInstance() {
 		return plugin;
