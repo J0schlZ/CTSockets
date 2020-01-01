@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"de.crafttogether.ctsockets.bukkit"},{"l":"de.crafttogether.ctsockets.bukkit.events"},{"l":"de.crafttogether.ctsockets.bungee"},{"l":"de.crafttogether.ctsockets.bungee.events"}]
