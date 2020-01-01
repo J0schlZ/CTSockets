@@ -37,7 +37,7 @@
   <distributionManagement>
     <repository>
       <id>ctogether-repo</id>
-      <url>https://ci.vanilla-minecraft.de/plugin/repository/</url>
+      <url>https://ci.vanilla-minecraft.de/plugin/repository/project/CTSockets/LastSuccessful/repository/</url>
     </repository>
   </distributionManagement>
   <build>
