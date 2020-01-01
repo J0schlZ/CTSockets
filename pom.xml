@@ -36,12 +36,11 @@
   </dependencies>
   <distributionManagement>
     <repository>
-      <id>ctogether-repo</id>
-      <url>https://ci.vanilla-minecraft.de/plugin/repository/project/CTSockets/LastSuccessful/repository/</url>
+      <id>ctogether-ftp</id>
+      <url>ftp://maven.vanilla-minecraft.de/</url>
     </repository>
   </distributionManagement>
   <build>
-    <finalName>CTSockets</finalName>
     <defaultGoal>clean deploy</defaultGoal>
     <sourceDirectory>src/main/java</sourceDirectory>
     <plugins>
@@ -79,5 +78,12 @@
         </includes>
       </resource>
     </resources>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-ftp</artifactId>
+        <version>1.0-alpha-6</version>
+      </extension>
+    </extensions>
   </build>
 </project>
