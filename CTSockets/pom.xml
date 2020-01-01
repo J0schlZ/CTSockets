@@ -34,9 +34,15 @@
       <version>20190722</version>
     </dependency>
   </dependencies>
+  <distributionManagement>
+    <repository>
+      <id>ctogether-repo</id>
+      <url>https://ci.vanilla-minecraft.de/plugin/repository/</url>
+    </repository>
+  </distributionManagement>
   <build>
     <finalName>CTSockets</finalName>
-    <defaultGoal>clean package</defaultGoal>
+    <defaultGoal>clean deploy</defaultGoal>
     <sourceDirectory>src/main/java</sourceDirectory>
     <plugins>
       <plugin>
