@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.crafttogether</groupId>
   <artifactId>CTSockets</artifactId>
-  <version>1.2.0-BETA</version>
+  <version>1.2.1-SNAPSHOT</version>
   <name>CTSockets</name>
   <description>No more Plugin Messaging Channels!</description>
   <repositories>
