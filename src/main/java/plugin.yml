@@ -1,9 +1,11 @@
 name: CTSockets
 description: No more Plugin Messaging Channels!
 main: de.crafttogether.ctsockets.bukkit.CTSockets
-version: 1.2.1
+api-version: 1.13
+version: ${project.version}
+build: ${project.cibuild}
 author: J0schlZ
-website: https://www.craft-together.de/
+website: ${project.url}
 commands:
   ctsockets:
     description: Type "/ctsockets help" for more Information.
