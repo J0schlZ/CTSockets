@@ -27,6 +27,7 @@ public final class ServerDisconnectedEvent extends Event
     
     /**
      * @hidden
+     * @return handlers (HandlerList)
      */
     public HandlerList getHandlers() {
         return handlers;
@@ -34,6 +35,7 @@ public final class ServerDisconnectedEvent extends Event
     
     /**
      * @hidden
+     * @return handlers (HandlerList)
      */
     public static HandlerList getHandlerList() {
         return handlers;
