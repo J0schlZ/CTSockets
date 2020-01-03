@@ -19,6 +19,8 @@ import de.crafttogether.ctsockets.bukkit.events.CommandReceivedEvent;
 import de.crafttogether.ctsockets.bukkit.events.MessageReceivedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerConnectedEvent;
 import de.crafttogether.ctsockets.bukkit.events.ServerDisconnectedEvent;
+import de.crafttogether.ctsockets.bukkit.events.SocketConnectedEvent;
+import de.crafttogether.ctsockets.bukkit.events.SocketDisconnectedEvent;
 import net.md_5.bungee.api.ChatColor;
 
 /**
@@ -133,7 +135,10 @@ public class CTSocketClient implements Runnable {
 					
 					plugin.getLogger().info("Connection successful!");
 					isRegistered = true;
-					connectionAttempts = 0;					
+					connectionAttempts = 0;
+					
+					SocketConnectedEvent event = new SocketConnectedEvent(true);
+					Bukkit.getPluginManager().callEvent(event);
 					continue;
 				}
 				
@@ -270,7 +275,7 @@ public class CTSocketClient implements Runnable {
 		this.closeConection();
 	}
 	
-	private void closeConection() {	
+	private void closeConection() {
 		isConnected = false;
 		isRegistered = false;
 		
@@ -287,6 +292,9 @@ public class CTSocketClient implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		SocketDisconnectedEvent event = new SocketDisconnectedEvent(true);
+		Bukkit.getPluginManager().callEvent(event);
 	}
 	
 	private void register(String clientName) {
