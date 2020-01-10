@@ -233,6 +233,9 @@ public class CTSocketClient implements Runnable {
 		if (isConnected && !shutdown)
 			plugin.getLogger().warning("lost connection to proxy");
 
+		SocketDisconnectedEvent event = new SocketDisconnectedEvent(true);
+		Bukkit.getPluginManager().callEvent(event);
+		
 		closeConection();
 		retryConnect();
 	}
@@ -292,9 +295,6 @@ public class CTSocketClient implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		SocketDisconnectedEvent event = new SocketDisconnectedEvent(true);
-		Bukkit.getPluginManager().callEvent(event);
 	}
 	
 	private void register(String clientName) {
