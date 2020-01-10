@@ -48,6 +48,9 @@ public class CTSocketServer implements Runnable {
 			socket = new ServerSocket(port);
 			listen = true;
 			
+			if (socket == null)
+				return;
+						
 			plugin.getLogger().info("Waiting for connections...");
 			
 			while (listen) {
@@ -67,6 +70,7 @@ public class CTSocketServer implements Runnable {
 		
 		catch (BindException e) {
 			plugin.getLogger().warning("Can't bind to " + port + ".. Port already in use!");
+			plugin.onDisable();
 		}
 		
 		catch (IOException e) {
