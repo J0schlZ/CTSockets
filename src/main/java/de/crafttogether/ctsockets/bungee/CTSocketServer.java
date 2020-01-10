@@ -90,11 +90,13 @@ public class CTSocketServer implements Runnable {
 		for (UUID clientID : clients.keySet())
 			((ConnectionHandler) clients.get(clientID)).disconnect();
 		
-		try {
-			socket.close();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
+		if (socket != null) {
+			try {
+				socket.close();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
