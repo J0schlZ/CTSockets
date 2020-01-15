@@ -1,6 +1,7 @@
 package de.crafttogether.ctsockets.bungee;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -47,6 +48,9 @@ public class CTSocketServer implements Runnable {
 			socket = new ServerSocket(port);
 			listen = true;
 			
+			if (socket == null)
+				return;
+						
 			plugin.getLogger().info("Waiting for connections...");
 			
 			while (listen) {
@@ -62,7 +66,14 @@ public class CTSocketServer implements Runnable {
 				if (client != null)
 					handleConnection(client);
 			}
-		} catch (IOException e) {
+		}
+		
+		catch (BindException e) {
+			plugin.getLogger().warning("Can't bind to " + port + ".. Port already in use!");
+			plugin.onDisable();
+		}
+		
+		catch (IOException e) {
 			e.printStackTrace();
 			return;
 		}
@@ -79,11 +90,13 @@ public class CTSocketServer implements Runnable {
 		for (UUID clientID : clients.keySet())
 			((ConnectionHandler) clients.get(clientID)).disconnect();
 		
-		try {
-			socket.close();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
+		if (socket != null) {
+			try {
+				socket.close();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

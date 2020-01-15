@@ -147,6 +147,7 @@ public class CommandHandler implements TabExecutor {
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
 		ArrayList<String> list = new ArrayList<String>();
+		ArrayList<String> newList = new ArrayList<String>();
 		
 		if (args.length < 2) {
 			list.add("help");
@@ -160,6 +161,16 @@ public class CommandHandler implements TabExecutor {
 					list.add(server);
 			}			
 		}
+		
+		if (args.length < 1 || args[args.length - 1].equals(""))
+            newList = list;
+        else {
+            for (String value : list) {
+                if (value.toLowerCase().startsWith(args[args.length - 1].toLowerCase()))
+                    newList.add(value);
+            }
+        }
+		
 		return list;
 	}
 	

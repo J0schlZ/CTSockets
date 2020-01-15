@@ -150,6 +150,14 @@ public class CTSockets extends JavaPlugin {
 	}
 	
 	/**
+	 * Returns the clients name defined in config.yml
+	 * @return FileConfiguration
+	 */
+	public String getClientName() {
+		return socketClient.getName();
+	}
+	
+	/**
 	 * Returns the message configuration of the plugin
 	 * @return FileConfiguration
 	 */
