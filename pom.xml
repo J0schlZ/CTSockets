@@ -65,7 +65,7 @@
   <distributionManagement>
     <repository>
       <id>ctogether-ftp</id>
-      <url>ftp://maven.vanilla-minecraft.de/</url>
+      <url>ftp://maven.craft-together.de/</url>
     </repository>
   </distributionManagement>
   
